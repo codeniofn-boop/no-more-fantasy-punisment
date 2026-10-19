@@ -6,48 +6,14 @@ import { PositionBadge, StatusBadge } from "@/components/ui/Badge";
 import { Panel } from "@/components/ui/Panel";
 import { ScoreBar } from "@/components/ui/ScoreBar";
 import { scoreTextTone } from "@/lib/actionMeta";
-import type { Player, PlayerScore, Roster, RosterAnalysis } from "@/utils/fantasyEngine";
+import { buildRosterRows } from "@/lib/rosterRows";
+import type { PlayerScore, Roster, RosterAnalysis } from "@/utils/fantasyEngine";
 
 interface RosterTableProps {
   roster: Roster;
   analysis: RosterAnalysis;
   onExport: () => void;
   onClear: () => void;
-}
-
-interface Row {
-  player: Player;
-  score: PlayerScore;
-  slotLabel: string;
-  isStarter: boolean;
-}
-
-function buildRows(roster: Roster, analysis: RosterAnalysis): Row[] {
-  const scoreById = new Map(analysis.scores.map((score) => [score.playerId, score]));
-  const starterSlots = new Map(analysis.lineup.starters.map((starter) => [starter.playerId, starter.slot]));
-  const rows: Row[] = [];
-
-  for (const starter of analysis.lineup.starters) {
-    const player = roster.players.find((candidate) => candidate.id === starter.playerId);
-    const score = scoreById.get(starter.playerId);
-    if (player && score) rows.push({ player, score, slotLabel: starter.slot, isStarter: true });
-  }
-
-  const bench = roster.players
-    .filter((player) => !starterSlots.has(player.id))
-    .map((player) => ({ player, score: scoreById.get(player.id) }))
-    .filter((entry): entry is { player: Player; score: PlayerScore } => entry.score !== undefined)
-    .sort((a, b) => {
-      const aIr = a.player.injury.status === "IR" ? 1 : 0;
-      const bIr = b.player.injury.status === "IR" ? 1 : 0;
-      if (aIr !== bIr) return aIr - bIr;
-      return b.score.projectedPoints - a.score.projectedPoints;
-    });
-
-  for (const entry of bench) {
-    rows.push({ ...entry, slotLabel: entry.player.injury.status === "IR" ? "IR" : "BN", isStarter: false });
-  }
-  return rows;
 }
 
 function TrendIcon({ trend }: { trend: PlayerScore["trend"] }) {
@@ -57,7 +23,7 @@ function TrendIcon({ trend }: { trend: PlayerScore["trend"] }) {
 }
 
 export function RosterTable({ roster, analysis, onExport, onClear }: RosterTableProps) {
-  const rows = buildRows(roster, analysis);
+  const rows = buildRosterRows(roster, analysis);
   const playerById = new Map(roster.players.map((player) => [player.id, player]));
 
   return (

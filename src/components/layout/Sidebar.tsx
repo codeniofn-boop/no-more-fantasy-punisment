@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { CalendarDays, LayoutDashboard, Shield, Users, X, Zap, type LucideIcon } from "lucide-react";
 
 import type { Roster, RosterAnalysis } from "@/utils/fantasyEngine";
@@ -44,15 +45,15 @@ export function Sidebar({ view, onNavigate, mobileOpen, onClose, roster, analysi
   const content = (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between px-5 pt-5 pb-4">
-        <div className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-3 rounded-xl transition hover:opacity-90" title="Back to the FantasyShield site">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-shield-500/15 text-shield-400 shadow-glow ring-1 ring-shield-500/40">
             <Shield className="h-5 w-5" />
           </span>
-          <div>
-            <p className="text-base font-bold tracking-tight text-ink-100">FantasyShield</p>
-            <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-ink-300">Win Engine</p>
-          </div>
-        </div>
+          <span>
+            <span className="block text-base font-bold tracking-tight text-ink-100">FantasyShield</span>
+            <span className="block text-[11px] font-medium uppercase tracking-[0.18em] text-ink-300">Win Engine</span>
+          </span>
+        </Link>
         <button
           type="button"
           onClick={onClose}

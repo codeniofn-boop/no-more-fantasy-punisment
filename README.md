@@ -11,7 +11,12 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000), click **Run the sample roster**, and the Win Engine populates the dashboard. Everything runs locally with no external services or API keys.
+Open [http://localhost:3000](http://localhost:3000) for the landing page, or go straight to [http://localhost:3000/dashboard](http://localhost:3000/dashboard), click **Run the sample roster**, and the Win Engine populates the dashboard. Everything runs locally with no external services or API keys.
+
+| Route        | What it is                                                                                              |
+| ------------ | ------------------------------------------------------------------------------------------------------- |
+| `/`          | Editorial landing page: Swiss grid, Inter + Instrument Serif, monochrome, live engine output at build time |
+| `/dashboard` | The FantasyShield application                                                                           |
 
 | Script                  | What it does                                                    |
 | ----------------------- | --------------------------------------------------------------- |
@@ -67,7 +72,8 @@ The last imported roster is remembered in `localStorage` so a refresh keeps your
 ```
 src/
   app/
-    page.tsx                                  Dashboard entry (renders the client app)
+    page.tsx                                  Landing page (static; runs the engine on the sample roster at build time)
+    dashboard/page.tsx                        Dashboard entry (renders the client app)
     layout.tsx                                Root layout, fonts, metadata
     globals.css                               Tailwind 4 theme tokens and dark theme
     api/analyze/route.ts                      POST: normalise a roster and run the engine
@@ -78,6 +84,7 @@ src/
     roster/RosterDropzone.tsx, RosterTable.tsx
     action-center/ActionCenter.tsx, ActionCard.tsx
     dashboard/DashboardView.tsx, MatchupOutlook.tsx
+    landing/                                  Editorial landing page: primitives, procedural photo plates, data sections
     ui/                                       Badges, score bars, health ring, panel
   data/
     teams.ts                                  32 teams, defense profiles, generated 18-week schedule
@@ -89,6 +96,7 @@ src/
   lib/
     api.ts                                    Typed fetch client for the route handlers
     actionMeta.ts                             Lane metadata and shared style maps
+    rosterRows.ts                             Shared starters-then-bench ordering for tables
 scripts/
   engine-report.ts                            Schedule validation + sample analysis printout
 ```
@@ -105,6 +113,10 @@ scripts/
 - **Projected points** = recency-weighted points adjusted for next opponent, bye and injury; used to build the optimal lineup.
 
 All thresholds live in `ENGINE_CONFIG`, so tuning the engine is a one-file change.
+
+### Landing page
+
+The root route is a long-scroll editorial page built on a 12-column grid with hairline rules, 2px radii and a paper-white / charcoal palette (one deep-graphite band for the engine chapter). Headlines are set in Instrument Serif, everything else in Inter, data in Geist Mono with tabular figures. There are no icons or illustrations: the photographic plates are procedural surfaces (fractal relief, directional lighting, film grain) rendered with SVG filters, so they stay crisp at 4K. All figures on the page are real engine output for the sample roster, computed when the page is prerendered.
 
 ### Data
 
