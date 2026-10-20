@@ -25,6 +25,23 @@ import {
 
 export type RosterInputFormat = "json" | "csv" | "text";
 
+/** Upper bound on roster entries accepted from any single input. */
+export const MAX_PLAYERS = 200;
+/** Only the most recent weeks of usage are kept for scoring. */
+export const MAX_USAGE_WEEKS = 8;
+/** Player names are trimmed to this many characters. */
+export const MAX_NAME_LENGTH = 80;
+
+function cleanName(value: string): string {
+  return value.replace(/\s+/g, " ").trim().slice(0, MAX_NAME_LENGTH);
+}
+
+function overLimit(count: number, unit: string, errors: string[]): boolean {
+  if (count <= MAX_PLAYERS) return false;
+  errors.push(`The input has ${count} ${unit}; the limit is ${MAX_PLAYERS} players per roster.`);
+  return true;
+}
+
 export interface PlayerDraft {
   name: string;
   position?: Position;
@@ -348,7 +365,7 @@ export function parseTextLine(rawLine: string, lineNumber: number): LineParse {
     nameParts.push(token);
   }
 
-  draft.name = nameParts.join(" ").replace(/\s+/g, " ").trim();
+  draft.name = cleanName(nameParts.join(" "));
   if (draft.position === "DST" && draft.team) {
     draft.name = `${TEAM_NAMES[draft.team]} D/ST`;
   }
@@ -362,7 +379,11 @@ export function parseTextLine(rawLine: string, lineNumber: number): LineParse {
 export function parseRosterText(text: string): ParseResult {
   const context = newContext();
   const drafts: PlayerDraft[] = [];
-  text.split(/\r?\n/).forEach((line, index) => {
+  const lines = text.split(/\r?\n/).filter((line) => line.trim().length > 0);
+  if (overLimit(lines.length, "lines", context.errors)) {
+    return { format: "text", players: [], warnings: context.warnings, errors: context.errors, source: "paste" };
+  }
+  lines.forEach((line, index) => {
     const result = parseTextLine(line, index + 1);
     if (!result) return;
     if ("error" in result) {
@@ -464,6 +485,9 @@ export function parseRosterCsv(text: string): ParseResult {
 
   const drafts: PlayerDraft[] = [];
   const rows = hasHeader ? lines.slice(1) : lines;
+  if (overLimit(rows.length, "rows", context.errors)) {
+    return { format: "csv", players: [], warnings: context.warnings, errors: context.errors, source: "upload" };
+  }
   rows.forEach((line, index) => {
     const rowNumber = index + (hasHeader ? 2 : 1);
     const cells = splitDelimited(line, delimiter);
@@ -471,7 +495,7 @@ export function parseRosterCsv(text: string): ParseResult {
       const position = columnIndex[field];
       return position === undefined ? undefined : cells[position];
     };
-    const name = cell("name")?.trim();
+    const name = cleanName(cell("name") ?? "");
     if (!name) {
       context.errors.push(`row ${rowNumber}: missing player name.`);
       return;
@@ -547,11 +571,15 @@ function usageFromUnknown(value: unknown, label: string, warnings: string[]): We
       fantasyPoints,
     });
   });
-  return usage.length > 0 ? usage.sort((a, b) => a.week - b.week) : undefined;
+  if (usage.length === 0) return undefined;
+  usage.sort((a, b) => a.week - b.week);
+  return usage.slice(-MAX_USAGE_WEEKS);
 }
 
 function draftFromRecord(record: Record<string, unknown>, label: string, warnings: string[]): PlayerDraft | null {
-  const name = pickString(record, ["name", "fullName", "full_name", "playerName", "player_name", "player"]);
+  const rawName = pickString(record, ["name", "fullName", "full_name", "playerName", "player_name", "player"]);
+  if (!rawName) return null;
+  const name = cleanName(rawName);
   if (!name) return null;
 
   const draft: PlayerDraft = { name, sourceLabel: label };
@@ -611,6 +639,9 @@ export function playersFromUnknown(value: unknown): ParseResult {
   if (!items) {
     context.errors.push("Expected an array of players or an object with a \"players\" array.");
     return finalize("json", [], context, extras);
+  }
+  if (overLimit(items.length, "entries", context.errors)) {
+    return { format: "json", players: [], warnings: context.warnings, errors: context.errors, ...extras };
   }
 
   const drafts: PlayerDraft[] = [];

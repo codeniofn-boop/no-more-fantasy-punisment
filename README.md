@@ -17,6 +17,7 @@ Open [http://localhost:3000](http://localhost:3000) for the landing page, or go 
 | ------------ | ------------------------------------------------------------------------------------------------------- |
 | `/`          | Editorial landing page: Swiss grid, Inter + Instrument Serif, monochrome, live engine output at build time |
 | `/dashboard` | The FantasyShield application                                                                           |
+| anything else | Branded 404 in the same editorial style                                                                |
 
 | Script                  | What it does                                                    |
 | ----------------------- | --------------------------------------------------------------- |
@@ -25,6 +26,8 @@ Open [http://localhost:3000](http://localhost:3000) for the landing page, or go 
 | `npm run start`         | Serve the production build                                      |
 | `npm run lint`          | ESLint (Next.js core-web-vitals + TypeScript rules)             |
 | `npm run typecheck`     | `tsc --noEmit`                                                  |
+| `npm test`              | Unit and route-handler tests (Node test runner via tsx)         |
+| `npm run check`         | Typecheck, lint and tests in one go                             |
 | `npm run engine:report` | Validates the generated schedule and prints the sample analysis |
 
 ## Features
@@ -99,7 +102,17 @@ src/
     rosterRows.ts                             Shared starters-then-bench ordering for tables
 scripts/
   engine-report.ts                            Schedule validation + sample analysis printout
+tests/
+  schedule, engine, parsers, leagueImport, routes   Node test runner suites, no extra test framework
 ```
+
+### Testing
+
+`npm test` runs the Node built-in test runner through `tsx`, so the suites import the app's modules with the same `@/` aliases as the app. They cover the generated schedule (one bye per team, symmetric pairings, no repeat matchups), the engine (bounded deterministic scores, legal lineups, lane rules, counterparts, the sample roster's headline moves), the three parsers (shapes, limits, exported-roster round trip), the league import (determinism, roster shape) and both route handlers called directly with `Request` objects.
+
+### Limits
+
+The analyze endpoint rejects bodies over 2 MB with a 413. Every parser caps a roster at 200 entries, trims names to 80 characters and keeps only the eight most recent weeks of usage per player.
 
 ### Simulation engine
 

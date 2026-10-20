@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "engine:report": "tsx scripts/engine-report.ts"
+    "engine:report": "tsx scripts/engine-report.ts",
+    "test": "node --import tsx --test \"tests/**/*.test.ts\"",
+    "check": "npm run typecheck && npm run lint && npm test"
   },
   "dependencies": {
     "lucide-react": "^1.59.0",

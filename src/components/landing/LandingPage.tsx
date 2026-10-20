@@ -152,9 +152,15 @@ export function LandingPage({ roster, analysis }: LandingPageProps) {
 
   return (
     <>
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[70] focus:rounded-[2px] focus:bg-ink focus:px-4 focus:py-2 focus:text-[12px] focus:font-medium focus:uppercase focus:tracking-[0.16em] focus:text-paper"
+      >
+        Skip to content
+      </a>
       <div className="editorial-progress" aria-hidden="true" />
       <SiteHeader />
-      <main>
+      <main id="main">
         <Hero roster={roster} analysis={analysis} />
         <NumbersBand />
 

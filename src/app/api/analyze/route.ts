@@ -5,6 +5,9 @@ import { playersFromUnknown } from "@/utils/rosterParsers";
 
 const SOURCES: readonly RosterSource[] = ["upload", "paste", "espn", "yahoo", "sample"];
 
+/** Largest request body accepted, in bytes. A 200-player roster with full usage is well under 1 MB. */
+export const MAX_BODY_BYTES = 2 * 1024 * 1024;
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -20,9 +23,18 @@ function stringField(record: Record<string, unknown>, key: string, fallback: str
  * Returns the normalised roster and the engine's analysis.
  */
 export async function POST(request: Request): Promise<NextResponse> {
+  const declaredLength = Number(request.headers.get("content-length") ?? "0");
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_BODY_BYTES) {
+    return NextResponse.json({ error: `Request body exceeds ${MAX_BODY_BYTES} bytes.` }, { status: 413 });
+  }
+
   let body: unknown;
   try {
-    body = await request.json();
+    const text = await request.text();
+    if (text.length > MAX_BODY_BYTES) {
+      return NextResponse.json({ error: `Request body exceeds ${MAX_BODY_BYTES} bytes.` }, { status: 413 });
+    }
+    body = JSON.parse(text) as unknown;
   } catch {
     return NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 });
   }
